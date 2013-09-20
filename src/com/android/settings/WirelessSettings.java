@@ -27,7 +27,6 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.os.SystemProperties;
@@ -80,6 +79,8 @@ public class WirelessSettings extends SettingsPreferenceFragment
     private static final String SAVED_MANAGE_MOBILE_PLAN_MSG = "mManageMobilePlanMessage";
 
     private String mManageMobilePlanMessage;
+    private static final String CONNECTED_TO_PROVISIONING_NETWORK_ACTION
+            = "com.android.server.connectivityservice.CONNECTED_TO_PROVISIONING_NETWORK_ACTION";
 
     /**
      * Invoked on each preference click in this hierarchy, overrides
@@ -120,15 +121,15 @@ public class WirelessSettings extends SettingsPreferenceFragment
         mManageMobilePlanMessage = null;
         Resources resources = getActivity().getResources();
 
-        NetworkInfo ni = mCm.getActiveNetworkInfo();
+        NetworkInfo ni = mCm.getProvisioningOrActiveNetworkInfo();
         if (mTm.hasIccCard() && (ni != null)) {
             // Get provisioning URL
             String url = mCm.getMobileProvisioningUrl();
             if (!TextUtils.isEmpty(url)) {
-                // Send user to provisioning webpage
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setData(Uri.parse(url));
-                startActivity(intent);
+                Intent intent = new Intent(CONNECTED_TO_PROVISIONING_NETWORK_ACTION);
+                intent.putExtra("EXTRA_URL", url);
+                Context context = getActivity().getBaseContext();
+                context.sendBroadcast(intent);
                 mManageMobilePlanMessage = null;
             } else {
                 // No provisioning URL
